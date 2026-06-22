@@ -1,0 +1,79 @@
+if Config.Framework ~= 'esx' then
+    return
+end
+
+-- ═══════ ESX FRAMEWORK BRIDGE ═══════
+
+local ESX = nil
+AddEventHandler('esx:getSharedObject', function(obj) ESX = obj end)
+TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
+
+function GetPlayerIdentifier(src)
+    local xPlayer = ESX and ESX.GetPlayerFromId(src)
+    if not xPlayer then return nil end
+    return xPlayer.identifier
+end
+
+function GetPlayerMoney(src)
+    local xPlayer = ESX and ESX.GetPlayerFromId(src)
+    if not xPlayer then return 0 end
+    return xPlayer.getMoney()
+end
+
+function RemovePlayerMoney(src, amount)
+    local xPlayer = ESX and ESX.GetPlayerFromId(src)
+    if not xPlayer then return false end
+    if xPlayer.getMoney() < amount then return false end
+    xPlayer.removeMoney(amount)
+    return true
+end
+
+function AddPlayerMoney(src, amount)
+    local xPlayer = ESX and ESX.GetPlayerFromId(src)
+    if not xPlayer then return end
+    xPlayer.addMoney(amount)
+end
+
+function RemovePlayerBank(src, amount)
+    local xPlayer = ESX and ESX.GetPlayerFromId(src)
+    if not xPlayer then return false end
+    local bankMoney = xPlayer.getAccount('bank').money
+    if bankMoney < amount then return false end
+    xPlayer.removeAccountMoney('bank', amount)
+    return true
+end
+
+function AddPlayerBank(src, amount)
+    local xPlayer = ESX and ESX.GetPlayerFromId(src)
+    if not xPlayer then return end
+    xPlayer.addAccountMoney('bank', amount)
+end
+
+function AddItem(src, item, count)
+    local xPlayer = ESX and ESX.GetPlayerFromId(src)
+    if not xPlayer then return end
+    xPlayer.addInventoryItem(item, count)
+end
+
+function RemoveItem(src, item, count)
+    local xPlayer = ESX and ESX.GetPlayerFromId(src)
+    if not xPlayer then return false end
+    if xPlayer.canRemoveInventoryItem(item, count) then
+        xPlayer.removeInventoryItem(item, count)
+        return true
+    end
+    return false
+end
+
+function GetItemCount(src, item)
+    local xPlayer = ESX and ESX.GetPlayerFromId(src)
+    if not xPlayer then return 0 end
+    local inv = xPlayer.getInventoryItem(item)
+    return inv and inv.count or 0
+end
+
+function GetPlayerJob(src)
+    local xPlayer = ESX and ESX.GetPlayerFromId(src)
+    if not xPlayer then return nil end
+    return xPlayer.job and xPlayer.job.name or nil
+end

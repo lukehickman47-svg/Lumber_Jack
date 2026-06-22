@@ -1,0 +1,73 @@
+if Config.Framework ~= 'esx' then return end
+
+ESX = exports['es_extended']:getSharedObject()
+
+-- ═══════════════════════════════════════════════════════
+-- NOTIFICATIONS  —  change your notification system here
+-- ═══════════════════════════════════════════════════════
+function Notify(notifType, text)
+    -- Examples of popular systems (uncomment the one you use):
+    -- exports['okokNotify']:Alert('Lumberjack', text, 5000, notifType)
+    -- exports['mythic_notify']:DoHudText(notifType, text)
+    -- exports['Venice-Notification']:Notify('Lumberjack', text, 5000, notifType)
+    -- lib.notify({ title = 'Lumberjack', description = text, type = notifType })
+    ESX.ShowNotification(text)
+end
+
+-- ═══════════════════════════════════════════════════════
+-- PLAYER JOB (for the optional SetJob in the config)
+-- ═══════════════════════════════════════════════════════
+function GetPlayerJob()
+    local data = ESX.GetPlayerData()
+    return data and data.job and data.job.name or nil
+end
+
+-- ═══════════════════════════════════════════════════════
+-- JOB VEHICLE
+-- The core creates/removes the truck; manage KEYS and FUEL here.
+-- JobVehicleSpawned(veh) → called when the truck spawns.
+-- JobVehicleRemoved(veh) → called just before it is removed.
+-- ═══════════════════════════════════════════════════════
+function JobVehicleSpawned(vehicle)
+    if not vehicle or not DoesEntityExist(vehicle) then return end
+    local plate = GetVehicleNumberPlateText(vehicle)
+    local model = GetEntityModel(vehicle)
+
+    -- Detect and give keys based on the active system
+    if GetResourceState('vehicles_keys') == 'started' then
+        TriggerServerEvent('vehicles_keys:selfGiveVehicleKeys', plate)
+    elseif GetResourceState('wasabi_carlock') == 'started' then
+        exports.wasabi_carlock:GiveKey(plate)
+    elseif GetResourceState('qs-vehiclekeys') == 'started' then
+        exports['qs-vehiclekeys']:GiveKeys(plate, model, true)
+    elseif GetResourceState('ak47_vehiclekeys') == 'started' then
+        exports['ak47_vehiclekeys']:GiveVirtualKey(plate)
+    elseif GetResourceState('mk_vehiclekeys') == 'started' then
+        exports['mk_vehiclekeys']:AddKey(vehicle)
+    elseif GetResourceState('dusa_vehiclekeys') == 'started' then
+        exports['dusa_vehiclekeys']:IntegrateKey(plate)
+    elseif GetResourceState('MrNewbVehicleKeys') == 'started' then
+        exports.MrNewbVehicleKeys:GiveKeys(vehicle)
+    end
+
+    -- Full fuel (adjust or remove based on your fuel system)
+    SetVehicleFuelLevel(vehicle, 100.0)
+end
+
+function JobVehicleRemoved(vehicle)
+    if not vehicle or not DoesEntityExist(vehicle) then return end
+    local plate = GetVehicleNumberPlateText(vehicle)
+    local model = GetEntityModel(vehicle)
+
+    if GetResourceState('wasabi_carlock') == 'started' then
+        exports.wasabi_carlock:RemoveKey(plate)
+    elseif GetResourceState('qs-vehiclekeys') == 'started' then
+        exports['qs-vehiclekeys']:RemoveKeys(plate, model)
+    elseif GetResourceState('vehicles_keys') == 'started' then
+        TriggerServerEvent('vehicles_keys:selfRemoveKeys', plate)
+    elseif GetResourceState('ak47_vehiclekeys') == 'started' then
+        exports['ak47_vehiclekeys']:RemoveVirtualKey(plate)
+    elseif GetResourceState('MrNewbVehicleKeys') == 'started' then
+        exports.MrNewbVehicleKeys:RemoveKeys(vehicle)
+    end
+end
